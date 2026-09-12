@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const jwtSecret = process.env.JWT_SECRET || 'local-development-secret-change-me';
+const governmentLoginEmail = String(
+  process.env.GOVERNMENT_LOGIN_EMAIL || 'government.demo@jharkhand.gov.in'
+).trim().toLowerCase();
 
 if (!process.env.JWT_SECRET) {
   console.warn('JWT_SECRET is not set. Using a development-only fallback secret.');
@@ -24,8 +27,8 @@ async function registerUser({ name, email, password, user_role }) {
   if (normalizedName.length < 2) throw new Error('Name must be at least 2 characters long.');
   if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) throw new Error('A valid email address is required.');
   if (String(password || '').length < 8) throw new Error('Password must be at least 8 characters long.');
-  if (!['citizen', 'government', 'university', 'industry'].includes(normalizedRole)) {
-    throw new Error('A valid stakeholder role is required.');
+  if (!['citizen', 'university', 'industry'].includes(normalizedRole)) {
+    throw new Error('Government accounts are provisioned by the administrator.');
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -48,7 +51,11 @@ async function loginUser({ email, password }) {
   );
 
   const user = result.rows[0];
-  if (!user || !(await bcrypt.compare(String(password || ''), user.password_hash))) {
+  if (
+    !user
+    || (user.user_role === 'government' && normalizedEmail !== governmentLoginEmail)
+    || !(await bcrypt.compare(String(password || ''), user.password_hash))
+  ) {
     throw new Error('Invalid email or password.');
   }
 
