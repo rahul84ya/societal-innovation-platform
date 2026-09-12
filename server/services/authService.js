@@ -24,8 +24,8 @@ async function registerUser({ name, email, password, user_role }) {
   if (normalizedName.length < 2) throw new Error('Name must be at least 2 characters long.');
   if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) throw new Error('A valid email address is required.');
   if (String(password || '').length < 8) throw new Error('Password must be at least 8 characters long.');
-  if (!['citizen', 'university', 'industry'].includes(normalizedRole)) {
-    throw new Error('Public registration is available only for citizen, university, and industry accounts. Government accounts must be created by an administrator.');
+  if (!['citizen', 'government', 'university', 'industry'].includes(normalizedRole)) {
+    throw new Error('A valid stakeholder role is required.');
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
