@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5001';
 const AUTH_STORAGE_KEY = 'sih_auth';
 
 export function getAuth() {
@@ -27,7 +27,7 @@ export async function apiFetch(path, options = {}) {
     headers.set('Authorization', `Bearer ${auth.token}`);
   }
 
-  if (options.body && !headers.has('Content-Type')) {
+  if (options.body && !headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 

@@ -1,7 +1,27 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const router = express.Router();
 const problemController = require('../controllers/problemController');
 const { requireAuth, requireRole } = require('../middleware/authMiddleware');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../uploads/'))
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
+  }
+});
+const upload = multer({ storage: storage });
+
+router.post('/upload-image', requireAuth, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No image provided' });
+  }
+  const imageUrl = `http://localhost:${process.env.PORT || 5001}/uploads/${req.file.filename}`;
+  res.json({ success: true, url: imageUrl });
+});
 
 router.use(requireAuth);
 

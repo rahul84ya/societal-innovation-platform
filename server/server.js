@@ -11,6 +11,7 @@ const port = Number.parseInt(process.env.PORT, 10) || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/problems', require('./routes/problemRoutes'));

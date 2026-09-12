@@ -61,29 +61,40 @@ function IndustryPortal() {
   }, []);
 
   return (
-    <div className="card-layout" style={{ maxWidth: 1100 }}>
-      <h2>🏭 Enterprise Portal</h2>
-      {loading && <p>Loading live enterprise opportunities...</p>}
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 bg-gray-50 min-h-screen">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">🏭 Enterprise Portal</h2>
+      </div>
+      
+      {loading && (
+        <div className="flex justify-center my-8">
+           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+      )}
 
-      <section style={{ marginBottom: '32px' }}>
-        <h2>Corporate Project Tracking</h2>
+      <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-xl font-semibold text-gray-800">Corporate Project Tracking</h2>
+        </div>
+        <div className="p-6">
         {activeProjects.length === 0 ? (
-          <p>No allotted projects are currently active.</p>
+          <p className="text-gray-500 italic text-center py-8">No allotted projects are currently active.</p>
         ) : (
-          <div style={{ display: 'grid', gap: '16px' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {activeProjects.map((project) => (
-              <article key={project.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '16px', background: '#fff' }}>
-                <h3>{project.title}</h3>
-                <p><strong>Status:</strong> {project.problem_status}</p>
-                <p><strong>Milestone stage:</strong> {project.current_milestone_stage}</p>
+              <article key={project.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{project.title}</h3>
+                <div className="space-y-2 mb-4">
+                  <p className="text-sm"><strong className="text-gray-700">Status:</strong> <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{project.problem_status}</span></p>
+                  <p className="text-sm"><strong className="text-gray-700">Milestone stage:</strong> {project.current_milestone_stage}</p>
+                </div>
                 {Number(project.current_milestone_stage) === 0 && (
-                  <span>Phase 1: Academic Lab Prototyping</span>
+                  <span className="inline-block bg-yellow-50 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium border border-yellow-200">Phase 1: Academic Lab Prototyping</span>
                 )}
                 {Number(project.current_milestone_stage) === 1 && (
                   <button
                     type="button"
-                    className="btn-primary"
-                    style={{ maxWidth: '360px', marginTop: '12px' }}
+                    className="w-full mt-4 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                     disabled={loading}
                     onClick={() => triggerFactoryHandover(project.id)}
                   >
@@ -94,36 +105,47 @@ function IndustryPortal() {
             ))}
           </div>
         )}
+        </div>
       </section>
 
-      <div style={{ display: 'grid', gap: '16px' }}>
-        {openChallenges.length === 0 ? (
-          <p>No open enterprise opportunities available right now.</p>
-        ) : (
-          openChallenges.map((problem) => (
-            <div key={problem.id} style={{ border: '1px solid #ddd', borderRadius: '12px', padding: '16px', background: '#fff' }}>
-              <h3>{problem.title}</h3>
-              <p>{problem.description}</p>
-              {problem.image_url && (
-                <img src={problem.image_url} alt={problem.title} style={{ width: '200px', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
-              )}
-              <p><strong>Budget:</strong> ₹{Number(problem.allocated_budget || 0).toLocaleString()}</p>
-              <p><strong>Severity:</strong> {problem.severity_score}</p>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={() => setSelectedProblem(problem.id)}
-                style={{ width: '220px' }}
-              >
-                Partner & Apply as Consortium
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+      <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-xl font-semibold text-gray-800">Open Enterprise Opportunities</h2>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {openChallenges.length === 0 ? (
+              <p className="text-gray-500 italic col-span-full text-center py-8">No open enterprise opportunities available right now.</p>
+            ) : (
+              openChallenges.map((problem) => (
+                <div key={problem.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+                  {problem.image_url && (
+                    <img src={problem.image_url} alt={problem.title} className="w-full h-48 object-cover" />
+                  )}
+                  <div className="p-5 flex flex-col flex-grow">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{problem.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">{problem.description}</p>
+                    <div className="space-y-2 mb-6">
+                      <p className="text-sm"><strong className="text-gray-700">Budget:</strong> ₹{Number(problem.allocated_budget || 0).toLocaleString()}</p>
+                      <p className="text-sm"><strong className="text-gray-700">Severity:</strong> <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{problem.severity_score}</span></p>
+                    </div>
+                    <button
+                      type="button"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 mt-auto"
+                      onClick={() => setSelectedProblem(problem.id)}
+                    >
+                      Partner & Apply as Consortium
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
 
       {selectedProblem && (
-        <div style={{ marginTop: '24px' }}>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <JointProposalForm
             problemId={selectedProblem}
             onSubmitSuccess={() => {
