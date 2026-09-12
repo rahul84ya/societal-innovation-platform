@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../config/supabaseClient';
 import CitizenVerificationWidget from '../components/CitizenVerificationWidget';
+import MapLocationPicker from '../components/MapLocationPicker';
+import ProblemLocation from '../components/ProblemLocation';
 import { apiFetch } from '../auth';
+import { notify } from '../components/ToastProvider';
 
 function CitizenSubmitForm() {
+  const maxImageSize = 10 * 1024 * 1024;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [location, setLocation] = useState({ latitude: null, longitude: null });
+  const [locationAddress, setLocationAddress] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [trackedProblems, setTrackedProblems] = useState([]);
@@ -36,8 +41,9 @@ function CitizenSubmitForm() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
 
-    if (title.trim().length < 5) return alert('Title must be at least 5 characters long.');
-    if (description.trim().length < 20) return alert('Description must be at least 20 characters long.');
+    if (title.trim().length < 5) return notify('Title must be at least 5 characters long.', 'error');
+    if (description.trim().length < 20) return notify('Description must be at least 20 characters long.', 'error');
+    if (location.latitude === null || location.longitude === null) return notify('Please pin the problem location on the map.', 'error');
 
     setLoading(true);
     let absoluteImageUrl = '';
@@ -66,27 +72,45 @@ function CitizenSubmitForm() {
           title: title.trim(),
           description: description.trim(),
           image_url: absoluteImageUrl,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          location_address: locationAddress.trim(),
         }),
       });
 
       const parsedResponse = await serverResponse.json();
 
       if (parsedResponse.success) {
-        alert('Incident successfully submitted and securely logged in PostgreSQL!');
+        notify('Incident successfully submitted and securely logged in PostgreSQL!', 'success');
         setTitle('');
         setDescription('');
+        setLocation({ latitude: null, longitude: null });
+        setLocationAddress('');
         setImageFile(null);
         document.getElementById('evidence-upload-input').value = '';
         await fetchTrackedProblems();
       } else {
-        alert('Server validation breakdown: ' + parsedResponse.error);
+        notify('Server validation breakdown: ' + parsedResponse.error, 'error');
       }
     } catch (error) {
       console.error('Ingression workflow exception caught:', error);
-      alert('Failed to execute complete ingestion pipeline: ' + error.message);
+      notify('Failed to execute complete ingestion pipeline: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageChange = (event) => {
+    const selectedFile = event.target.files[0];
+
+    if (selectedFile && (!selectedFile.type.startsWith('image/') || selectedFile.size > maxImageSize)) {
+      notify('Please select an image file that is 10 MB or smaller.', 'error');
+      event.target.value = '';
+      setImageFile(null);
+      return;
+    }
+
+    setImageFile(selectedFile || null);
   };
 
   return (
@@ -111,6 +135,17 @@ function CitizenSubmitForm() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+            />
+          </div>
+
+          <div className="space-y-3">
+            <MapLocationPicker location={location} onChange={setLocation} />
+            <input
+              type="text"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors"
+              placeholder="Location name or landmark (optional)"
+              value={locationAddress}
+              onChange={(e) => setLocationAddress(e.target.value)}
             />
           </div>
 
@@ -140,7 +175,7 @@ function CitizenSubmitForm() {
                       type="file"
                       className="sr-only"
                       accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files[0])}
+                      onChange={handleImageChange}
                     />
                   </label>
                   <p className="pl-1 py-1">or drag and drop</p>
@@ -204,6 +239,7 @@ function CitizenSubmitForm() {
               <div className="p-5">
                 <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-1">{problem.title}</h3>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">{problem.description}</p>
+                <ProblemLocation latitude={problem.latitude} longitude={problem.longitude} address={problem.location_address} />
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="bg-gray-50 p-3 rounded border border-gray-100">

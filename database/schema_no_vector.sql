@@ -45,6 +45,9 @@ CREATE TABLE problems (
   title TEXT NOT NULL CHECK (char_length(trim(title)) >= 5),
   description TEXT NOT NULL CHECK (char_length(trim(description)) >= 20),
   image_url TEXT,
+  latitude NUMERIC(9, 6) CHECK (latitude IS NULL OR latitude BETWEEN -90 AND 90),
+  longitude NUMERIC(9, 6) CHECK (longitude IS NULL OR longitude BETWEEN -180 AND 180),
+  location_address TEXT,
   category TEXT NOT NULL,
   severity_score INTEGER NOT NULL CHECK (severity_score BETWEEN 1 AND 5),
   -- embedding vector(768),  -- Skipped: pgvector not installed
@@ -78,7 +81,7 @@ CREATE TABLE financial_ledger (
   id SERIAL PRIMARY KEY,
   problem_id INTEGER NOT NULL REFERENCES problems(id) ON DELETE CASCADE,
   proposal_id INTEGER NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
-  tranche_number INTEGER NOT NULL CHECK (tranche_number BETWEEN 1 AND 3),
+  tranche_number INTEGER NOT NULL CHECK (tranche_number BETWEEN 1 AND 4),
   amount_released NUMERIC(14, 2) NOT NULL CHECK (amount_released > 0),
   recipient_type TEXT NOT NULL CHECK (recipient_type IN ('university', 'industry')),
   disbursed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

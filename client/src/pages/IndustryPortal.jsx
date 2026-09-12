@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import JointProposalForm from '../components/JointProposalForm';
 import { apiFetch } from '../auth';
+import ProblemLocation from '../components/ProblemLocation';
+import { notify } from '../components/ToastProvider';
 
 function IndustryPortal() {
   const [openChallenges, setOpenChallenges] = useState([]);
@@ -32,30 +34,6 @@ function IndustryPortal() {
     }
   };
 
-  const triggerFactoryHandover = async (problemId) => {
-    try {
-      setLoading(true);
-      const response = await apiFetch('/api/problems/factory-handover', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem_id: Number(problemId) }),
-      });
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Factory handover failed.');
-      }
-
-      alert(result.message);
-      await fetchActiveProjects();
-    } catch (error) {
-      console.error('Factory handover failed:', error);
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const uploadFinalWork = async (problemId) => {
     try {
       setLoading(true);
@@ -75,11 +53,11 @@ function IndustryPortal() {
         throw new Error(result.error || 'Work upload failed.');
       }
 
-      alert('Final work uploaded successfully.');
+      notify('Final work uploaded successfully.', 'success');
       await fetchActiveProjects();
     } catch (error) {
       console.error('Work upload failed:', error);
-      alert(error.message);
+      notify(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -120,16 +98,6 @@ function IndustryPortal() {
                 </div>
                 {Number(project.current_milestone_stage) === 0 && (
                   <span className="inline-block bg-yellow-50 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium border border-yellow-200">Phase 1: Academic Lab Prototyping</span>
-                )}
-                {Number(project.current_milestone_stage) === 1 && project.problem_status !== 'industry_assigned' && (
-                  <button
-                    type="button"
-                    className="w-full mt-4 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                    disabled={loading}
-                    onClick={() => triggerFactoryHandover(project.id)}
-                  >
-                    Log Factory Deployment &amp; Trigger Handover
-                  </button>
                 )}
                 {project.problem_status === 'industry_assigned' && (
                   <div className="mt-4 space-y-4">
@@ -190,6 +158,7 @@ function IndustryPortal() {
                   <div className="p-5 flex flex-col flex-grow">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{problem.title}</h3>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">{problem.description}</p>
+                    <ProblemLocation latitude={problem.latitude} longitude={problem.longitude} address={problem.location_address} />
                     <div className="space-y-2 mb-6">
                       <p className="text-sm"><strong className="text-gray-700">Budget:</strong> ₹{Number(problem.allocated_budget || 0).toLocaleString()}</p>
                       <p className="text-sm"><strong className="text-gray-700">Severity:</strong> <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{problem.severity_score}</span></p>

@@ -51,6 +51,9 @@ exports.createProblemReport = async (req, res) => {
   const title = req.body.title;
   const description = req.body.description;
   const imageUrl = req.body.image_url ?? null;
+  const latitude = Number(req.body.latitude);
+  const longitude = Number(req.body.longitude);
+  const locationAddress = req.body.location_address?.trim() || null;
   const category = req.body.category || 'general';
   const severityScore = Number(req.body.severity_score ?? 3);
 
@@ -66,6 +69,10 @@ exports.createProblemReport = async (req, res) => {
     return res.status(400).json({ success: false, error: 'Description parameter fails strict database criteria (minimum 20 characters).' });
   }
 
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return res.status(400).json({ success: false, error: 'A valid map location is required. Latitude must be between -90 and 90 and longitude between -180 and 180.' });
+  }
+
   if (!Number.isInteger(severityScore) || severityScore < 1 || severityScore > 5) {
     return res.status(400).json({ success: false, error: 'Severity score must be an integer between 1 and 5.' });
   }
@@ -75,8 +82,8 @@ exports.createProblemReport = async (req, res) => {
     await databaseClient.query('BEGIN');
 
     const problemInsertQuery = `
-      INSERT INTO problems (user_id, title, description, image_url, category, severity_score, problem_status)
-      VALUES ($1, $2, $3, $4, $5, $6, 'reported')
+      INSERT INTO problems (user_id, title, description, image_url, latitude, longitude, location_address, category, severity_score, problem_status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'reported')
       RETURNING *;
     `;
 
@@ -85,6 +92,9 @@ exports.createProblemReport = async (req, res) => {
       title.trim(),
       description.trim(),
       imageUrl,
+      latitude,
+      longitude,
+      locationAddress,
       category.trim(),
       severityScore,
     ]);
@@ -329,6 +339,13 @@ exports.getConsortiumReviewQueue = async (req, res) => {
          problems.id AS problem_id,
          problems.title,
          problems.description,
+         problems.image_url,
+         problems.latitude,
+         problems.longitude,
+         problems.location_address,
+         problems.category,
+         problems.severity_score,
+         problems.ai_tags,
          problems.allocated_budget,
          problems.problem_status,
          proposals.id AS proposal_id,
@@ -426,10 +443,16 @@ exports.getCitizenProblems = async (req, res) => {
 exports.getActiveProjects = async (req, res) => {
   try {
     const query = req.user.user_role === 'government'
-      ? `SELECT *
+      ? `SELECT problems.*,
+                (SELECT proposals.id
+                 FROM proposals
+                 WHERE proposals.problem_id = problems.id
+                   AND proposals.proposal_status = 'allotted'
+                 ORDER BY proposals.id DESC
+                 LIMIT 1) AS proposal_id
          FROM problems
          WHERE problem_status IN ('in_progress', 'rework_in_progress', 'university_assigned', 'solution_uploaded', 'tender_raised', 'industry_assigned', 'industry_work_uploaded', 'solved')
-         ORDER BY id DESC;`
+        ORDER BY id DESC;`
       : `SELECT problems.*
          FROM problems
          JOIN proposals ON proposals.problem_id = problems.id

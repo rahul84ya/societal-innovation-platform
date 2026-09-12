@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import JointProposalForm from '../components/JointProposalForm';
 import { apiFetch } from '../auth';
+import ProblemLocation from '../components/ProblemLocation';
+import { notify } from '../components/ToastProvider';
 
 function UniversityDashboard() {
   const [openChallenges, setOpenChallenges] = useState([]);
@@ -35,7 +37,7 @@ function UniversityDashboard() {
   const uploadSolution = async (problemId) => {
     const notes = solutionNotes[problemId] || '';
     if (!notes.trim()) {
-      alert('Please enter solution notes before uploading.');
+      notify('Please enter solution notes before uploading.', 'error');
       return;
     }
 
@@ -52,12 +54,12 @@ function UniversityDashboard() {
         throw new Error(result.error || 'Solution upload failed.');
       }
 
-      alert(result.message);
+      notify(result.message, 'success');
       setSolutionNotes(prev => ({ ...prev, [problemId]: '' }));
       await fetchActiveProjects();
     } catch (error) {
       console.error('Upload failed:', error);
-      alert(error.message);
+      notify(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -147,6 +149,7 @@ function UniversityDashboard() {
                   <div className="p-5 flex flex-col flex-grow">
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{problem.title}</h3>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">{problem.description}</p>
+                    <ProblemLocation latitude={problem.latitude} longitude={problem.longitude} address={problem.location_address} />
                     <div className="space-y-2 mb-6">
                       <p className="text-sm"><strong className="text-gray-700">Category:</strong> <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{problem.category}</span></p>
                       <p className="text-sm"><strong className="text-gray-700">Budget:</strong> ₹{Number(problem.allocated_budget || 0).toLocaleString()}</p>

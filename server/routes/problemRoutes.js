@@ -1,26 +1,60 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 const router = express.Router();
 const problemController = require('../controllers/problemController');
 const { requireAuth, requireRole } = require('../middleware/authMiddleware');
+const supabase = require('../config/supabase');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads/'))
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  fileFilter: (req, file, callback) => {
+    if (!file.mimetype.startsWith('image/')) {
+      return callback(new Error('Only image files are allowed.'));
+    }
+
+    return callback(null, true);
   },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
-  }
 });
-const upload = multer({ storage: storage });
 
-router.post('/upload-image', requireAuth, upload.single('image'), (req, res) => {
+function handleImageUpload(req, res, next) {
+  upload.single('image')(req, res, (error) => {
+    if (!error) return next();
+
+    if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ success: false, error: 'Image must be 10 MB or smaller.' });
+    }
+
+    return res.status(400).json({ success: false, error: error.message || 'Invalid image upload.' });
+  });
+}
+
+router.post('/upload-image', requireAuth, handleImageUpload, async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, error: 'No image provided' });
   }
-  const imageUrl = `http://localhost:${process.env.PORT || 5001}/uploads/${req.file.filename}`;
-  res.json({ success: true, url: imageUrl });
+
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'problem-images';
+  const filePath = `problem-evidence/${req.user.id}/${crypto.randomUUID()}${path.extname(req.file.originalname).toLowerCase()}`;
+
+  try {
+    const { error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    return res.json({ success: true, url: data.publicUrl });
+  } catch (error) {
+    console.error('Supabase evidence upload failed:', error);
+    return res.status(502).json({ success: false, error: 'Evidence storage upload failed.' });
+  }
 });
 
 router.use(requireAuth);

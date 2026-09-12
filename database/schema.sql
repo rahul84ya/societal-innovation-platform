@@ -12,6 +12,11 @@ CREATE TYPE problem_status AS ENUM (
   'rejected_by_govt',
   'open_for_research',
   'pending_consortium_review',
+  'university_assigned',
+  'solution_uploaded',
+  'tender_raised',
+  'industry_assigned',
+  'industry_work_uploaded',
   'in_progress',
   'rework_in_progress',
   'pending_citizen_verification',
@@ -39,6 +44,9 @@ CREATE TABLE problems (
   title TEXT NOT NULL CHECK (char_length(trim(title)) >= 5),
   description TEXT NOT NULL CHECK (char_length(trim(description)) >= 20),
   image_url TEXT,
+  latitude NUMERIC(9, 6) CHECK (latitude IS NULL OR latitude BETWEEN -90 AND 90),
+  longitude NUMERIC(9, 6) CHECK (longitude IS NULL OR longitude BETWEEN -180 AND 180),
+  location_address TEXT,
   category TEXT NOT NULL,
   severity_score INTEGER NOT NULL CHECK (severity_score BETWEEN 1 AND 5),
   embedding vector(768),
@@ -48,14 +56,17 @@ CREATE TABLE problems (
   citizen_feedback_notes TEXT,
   citizen_verified_at TIMESTAMPTZ,
   current_milestone_stage INTEGER NOT NULL DEFAULT 0 CHECK (current_milestone_stage BETWEEN 0 AND 2),
-  parent_problem_id INTEGER REFERENCES problems(id) ON DELETE SET NULL
+  parent_problem_id INTEGER REFERENCES problems(id) ON DELETE SET NULL,
+  university_solution_url TEXT,
+  industry_work_url TEXT,
+  problem_solved_images_url TEXT
 );
 
 CREATE TABLE proposals (
   id SERIAL PRIMARY KEY,
   problem_id INTEGER NOT NULL REFERENCES problems(id) ON DELETE CASCADE,
   university_id INTEGER NOT NULL REFERENCES users(id),
-  industry_id INTEGER NOT NULL REFERENCES users(id),
+  industry_id INTEGER REFERENCES users(id),
   abstract_plan TEXT NOT NULL,
   corporate_contribution_notes TEXT,
   estimated_timeline_weeks INTEGER NOT NULL CHECK (estimated_timeline_weeks > 0),
@@ -69,7 +80,7 @@ CREATE TABLE financial_ledger (
   id SERIAL PRIMARY KEY,
   problem_id INTEGER NOT NULL REFERENCES problems(id) ON DELETE CASCADE,
   proposal_id INTEGER NOT NULL REFERENCES proposals(id) ON DELETE CASCADE,
-  tranche_number INTEGER NOT NULL CHECK (tranche_number BETWEEN 1 AND 3),
+  tranche_number INTEGER NOT NULL CHECK (tranche_number BETWEEN 1 AND 4),
   amount_released NUMERIC(14, 2) NOT NULL CHECK (amount_released > 0),
   recipient_type TEXT NOT NULL CHECK (recipient_type IN ('university', 'industry')),
   disbursed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

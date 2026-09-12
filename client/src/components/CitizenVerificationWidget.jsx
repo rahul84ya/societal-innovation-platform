@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../auth';
+import { notify } from './ToastProvider';
 
 function CitizenVerificationWidget({ problem, onComplete }) {
   const [rejectionReason, setRejectionReason] = useState('');
@@ -23,11 +24,11 @@ function CitizenVerificationWidget({ problem, onComplete }) {
         throw new Error(result.error || 'Citizen verification could not be recorded.');
       }
 
-      alert(result.message || 'Citizen verification recorded.');
+      notify(result.message || 'Citizen verification recorded.', 'success');
       if (onComplete) onComplete(result);
     } catch (error) {
       console.error('Citizen verification failed:', error);
-      alert(error.message);
+      notify(error.message, 'error');
     } finally {
       setSubmitting(false);
     }

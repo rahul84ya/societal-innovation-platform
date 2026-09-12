@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../auth';
+import ProblemLocation from '../components/ProblemLocation';
+import { notify } from '../components/ToastProvider';
 
 function GovernmentDashboard() {
   const [pendingProblems, setPendingProblems] = useState([]);
@@ -7,7 +9,6 @@ function GovernmentDashboard() {
   const [consortiumReviews, setConsortiumReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [budgetInputs, setBudgetInputs] = useState({});
-  const [approvedMilestones, setApprovedMilestones] = useState({});
 
   const fetchPendingProblems = async () => {
     try {
@@ -20,7 +21,7 @@ function GovernmentDashboard() {
       }
     } catch (error) {
       console.error('Failed to fetch pending problems:', error);
-      alert('Failed to load pending reports: ' + error.message);
+      notify('Failed to load pending reports: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -66,36 +67,13 @@ function GovernmentDashboard() {
         throw new Error(result.error || 'Project allotment failed.');
       }
 
-      alert(result.message);
+      notify(result.message, 'success');
       await Promise.all([fetchConsortiumReviews(), fetchActiveProjects()]);
     } catch (error) {
       console.error('Project allotment failed:', error);
-      alert(error.message);
+      notify(error.message, 'error');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const approveMilestone = async (problemId) => {
-    try {
-      setApprovedMilestones((previous) => ({ ...previous, [problemId]: true }));
-      const response = await apiFetch('/api/problems/approve-milestone', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem_id: Number(problemId), tranche_number: 2 }),
-      });
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Milestone payout failed.');
-      }
-
-      alert(result.message);
-      await fetchActiveProjects();
-    } catch (error) {
-      console.error('Milestone payout failed:', error);
-      setApprovedMilestones((previous) => ({ ...previous, [problemId]: false }));
-      alert(error.message);
     }
   };
 
@@ -113,11 +91,35 @@ function GovernmentDashboard() {
         throw new Error(result.error || 'Verification failed.');
       }
 
-      alert('Feasibility verified. Next 30% advance will be given and tender raised for industries.');
+      notify('Feasibility verified. Next 30% advance will be given and tender raised for industries.', 'success');
       await fetchActiveProjects();
     } catch (error) {
       console.error('Verification failed:', error);
-      alert(error.message);
+      notify(error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const allotIndustry = async (problemId, proposalId) => {
+    try {
+      setLoading(true);
+      const response = await apiFetch('/api/problems/allot-industry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problem_id: Number(problemId), proposal_id: Number(proposalId) }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Industry allotment failed.');
+      }
+
+      notify(result.message, 'success');
+      await fetchActiveProjects();
+    } catch (error) {
+      console.error('Industry allotment failed:', error);
+      notify(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -152,15 +154,15 @@ function GovernmentDashboard() {
       const result = await response.json();
 
       if (!result.success) {
-        alert(result.error || 'Audit action failed.');
+        notify(result.error || 'Audit action failed.', 'error');
         return;
       }
 
-      alert(result.message || 'Audit action complete.');
+      notify(result.message || 'Audit action complete.', 'success');
       await fetchPendingProblems();
     } catch (error) {
       console.error('Audit action failure:', error);
-      alert('Audit action failed: ' + error.message);
+      notify('Audit action failed: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -224,6 +226,7 @@ function GovernmentDashboard() {
                     <td className="px-6 py-4 align-top">
                       <div className="font-bold text-gray-900 mb-1">{problem.title}</div>
                       <div className="text-sm text-gray-600 line-clamp-3">{problem.description}</div>
+                      <ProblemLocation latitude={problem.latitude} longitude={problem.longitude} address={problem.location_address} />
                     </td>
                     <td className="px-6 py-4 align-top">
                       {problem.image_url ? (
@@ -306,6 +309,12 @@ function GovernmentDashboard() {
                   <article key={proposal.proposal_id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow">
                     <h4 className="text-lg font-bold text-gray-900 mb-2">{proposal.title}</h4>
                     <p className="text-sm text-gray-600 mb-4">{proposal.description}</p>
+                    <ProblemLocation latitude={proposal.latitude} longitude={proposal.longitude} address={proposal.location_address} />
+                    {proposal.image_url && (
+                      <a href={proposal.image_url} target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm font-semibold text-india-green hover:underline">
+                        View original evidence
+                      </a>
+                    )}
                     
                     <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                       <div className="bg-gray-50 p-2 rounded border border-gray-100">
@@ -365,7 +374,7 @@ function GovernmentDashboard() {
               <div className="space-y-4">
                 {activeProjects.map((project) => {
                   const milestoneComplete = Number(project.current_milestone_stage) >= 1;
-                  const disabled = milestoneComplete || approvedMilestones[project.id];
+                  const disabled = milestoneComplete;
 
                   return (
                     <article key={project.id} className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow">
@@ -402,6 +411,19 @@ function GovernmentDashboard() {
                             Verify Feasibility & Raise Tender (30% Advance)
                           </button>
                         </div>
+                      ) : project.problem_status === 'university_assigned' ? (
+                        <div className="bg-blue-50 border border-blue-200 p-3 rounded text-sm text-blue-800">
+                          Waiting for the university to upload its solution.
+                        </div>
+                      ) : project.problem_status === 'tender_raised' && project.proposal_id ? (
+                        <button
+                          type="button"
+                          className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-india-green hover:bg-green-700 transition-colors disabled:opacity-60"
+                          disabled={loading}
+                          onClick={() => allotIndustry(project.id, project.proposal_id)}
+                        >
+                          Assign Industry &amp; Release 30% Advance
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -411,9 +433,9 @@ function GovernmentDashboard() {
                               : 'bg-saffron hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 text-gray-900'
                           }`}
                           disabled={disabled}
-                          onClick={() => approveMilestone(project.id)}
+                          onClick={() => notify('This project has no Government action available at its current stage.', 'info')}
                         >
-                          {milestoneComplete ? 'Milestone 1 Already Paid' : 'Verify & Payout Milestone 1 (30%)'}
+                          Review project status
                         </button>
                       )}
                     </article>

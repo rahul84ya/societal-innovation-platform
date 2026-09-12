@@ -216,12 +216,12 @@ async function uploadIndustryWork(problem_id, industry_id, notes, image_url) {
       throw new Error('Only the allotted industry can upload work.');
     }
 
-    await databaseClient.query(`UPDATE problems SET problem_status = 'industry_work_uploaded', industry_work_url = $2, problem_solved_images_url = $3 WHERE id = $1;`, [problemId, notes, image_url]);
+    await databaseClient.query(`UPDATE problems SET problem_status = 'pending_citizen_verification', industry_work_url = $2, problem_solved_images_url = $3 WHERE id = $1;`, [problemId, notes, image_url]);
     await databaseClient.query(
       `INSERT INTO notifications (user_id, message) VALUES ($1, $2);`,
       [
         problemRecord.user_id,
-        `Industry has uploaded the final work for issue #${problemId}. Awaiting your verification.`
+        `Industry has uploaded the final work for issue #${problemId}. Please verify the fix.`
       ]
     );
 
@@ -249,8 +249,8 @@ async function confirmCitizenFix(problem_id, citizen_id) {
     if (Number(problemRecord.user_id) !== Number(citizen_id)) {
       throw new Error('Only the citizen who submitted this issue can confirm the fix.');
     }
-    if (problemRecord.problem_status !== 'industry_work_uploaded') {
-      throw new Error('Project must be in industry_work_uploaded state.');
+    if (problemRecord.problem_status !== 'pending_citizen_verification') {
+      throw new Error('Project must be in pending_citizen_verification state.');
     }
 
     const proposalResult = await databaseClient.query(
@@ -298,8 +298,8 @@ async function processCitizenObjection(problem_id, rejection_reason, citizen_id)
     if (Number(problemRecord.user_id) !== Number(citizen_id)) {
       throw new Error('Only the reporting citizen can reject the fix.');
     }
-    if (problemRecord.problem_status !== 'industry_work_uploaded') {
-      throw new Error('Can only reject when industry_work_uploaded.');
+    if (problemRecord.problem_status !== 'pending_citizen_verification') {
+      throw new Error('Can only reject when pending_citizen_verification.');
     }
 
     await databaseClient.query(

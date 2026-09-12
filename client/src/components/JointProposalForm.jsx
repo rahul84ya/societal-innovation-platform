@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch, getAuth } from '../auth';
+import { notify } from './ToastProvider';
 
 function JointProposalForm({ problemId, onSubmitSuccess, onCancel }) {
   const [problemIdInput, setProblemIdInput] = useState(problemId || '');
@@ -33,11 +34,11 @@ function JointProposalForm({ problemId, onSubmitSuccess, onCancel }) {
       const result = await response.json();
 
       if (!result.success) {
-        alert(result.error || 'Proposal submission failed.');
+        notify(result.error || 'Proposal submission failed.', 'error');
         return;
       }
 
-      alert('Joint proposal submitted successfully.');
+      notify('Joint proposal submitted successfully.', 'success');
       setProblemIdInput('');
       setUniversityId('');
       setIndustryId('');
@@ -50,7 +51,7 @@ function JointProposalForm({ problemId, onSubmitSuccess, onCancel }) {
       }
     } catch (error) {
       console.error('Failed to submit consortium proposal:', error);
-      alert('Submission failed: ' + error.message);
+      notify('Submission failed: ' + error.message, 'error');
     } finally {
       setSubmitting(false);
     }

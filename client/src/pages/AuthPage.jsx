@@ -125,7 +125,6 @@ function AuthPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors bg-white"
                 >
                   <option value="citizen">Citizen</option>
-                  <option value="government">Government</option>
                   <option value="university">University</option>
                   <option value="industry">Industry</option>
                 </select>

@@ -5,6 +5,7 @@ import UniversityDashboard from './pages/UniversityDashboard';
 import IndustryPortal from './pages/IndustryPortal';
 import AuthPage from './pages/AuthPage';
 import VideoBackground from './components/VideoBackground';
+import ToastProvider from './components/ToastProvider';
 import { clearAuth, getAuth } from './auth';
 
 function App() {
@@ -24,10 +25,10 @@ function App() {
 
   if (!auth?.user) {
     return (
-      <>
+      <ToastProvider>
         <VideoBackground />
         <AuthPage />
-      </>
+      </ToastProvider>
     );
   }
 
@@ -41,28 +42,29 @@ function App() {
   };
 
   return (
+    <ToastProvider>
     <div className="min-h-screen flex flex-col relative text-gray-800">
       <VideoBackground />
       
       {/* Global Header */}
       <header className="bg-white shadow-md border-b-4 border-saffron relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <img src="/jharkhand_logo.png" alt="Jharkhand Logo" className="w-16 h-16 object-contain rounded-full shadow-sm bg-white p-1" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-20 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <img src="/jharkhand_logo.png" alt="Jharkhand Logo" className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 object-contain rounded-full shadow-sm bg-white p-1" />
             <div>
-              <p className="text-xl font-bold text-india-green uppercase tracking-wider leading-tight">Government of Jharkhand</p>
+              <p className="text-sm sm:text-xl font-bold text-india-green uppercase tracking-wider leading-tight">Government of Jharkhand</p>
             </div>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6 ml-auto">
             <div className="text-right">
               <p className="text-sm font-semibold text-gray-800">{auth.user.name}</p>
               <p className="text-xs font-medium text-india-green uppercase">{role}</p>
             </div>
-            <button 
+            <button
               onClick={clearAuth}
               className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white shadow-sm"
             >
-              Sign out
+              <span className="hidden sm:inline">Sign out</span><span className="sm:hidden">Exit</span>
             </button>
           </div>
         </div>
@@ -97,6 +99,7 @@ function App() {
         </div>
       </footer>
     </div>
+    </ToastProvider>
   );
 }
 
