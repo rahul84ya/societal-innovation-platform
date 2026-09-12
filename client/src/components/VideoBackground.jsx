@@ -9,7 +9,8 @@ export default function VideoBackground() {
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         className="w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-40"
       ></iframe>
-      <div className="absolute inset-0 bg-gradient-to-b from-navy-blue/80 to-black/80 mix-blend-overlay"></div>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-saffron/80 to-india-green/80 mix-blend-overlay"></div>
     </div>
   );
 }

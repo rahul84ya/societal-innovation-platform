@@ -35,8 +35,11 @@ router.post('/report', requireRole('citizen'), problemController.createProblemRe
 router.post('/audit-review', requireRole('government'), problemController.verifyAndAuditWithAI);
 router.post('/submit-bid', requireRole('university', 'industry'), problemController.createConsortiumBid);
 router.post('/allot-project', requireRole('government'), problemController.allotConsortiumProject);
-router.post('/approve-milestone', requireRole('government'), problemController.approveMilestone);
-router.post('/factory-handover', requireRole('industry'), problemController.triggerFactoryHandover);
+router.post('/upload-university-solution', requireRole('university'), problemController.uploadUniversitySolution);
+router.post('/verify-university-solution', requireRole('government'), problemController.verifyUniversitySolution);
+router.post('/submit-industry-bid', requireRole('industry'), problemController.submitIndustryBid);
+router.post('/allot-industry', requireRole('government'), problemController.allotIndustry);
+router.post('/upload-industry-work', requireRole('industry'), problemController.uploadIndustryWork);
 router.post('/citizen-confirm', requireRole('citizen'), problemController.confirmCitizenFix);
 router.post('/citizen-reject', requireRole('citizen'), problemController.rejectCitizenFix);
 

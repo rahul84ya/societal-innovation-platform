@@ -13,8 +13,8 @@ async function submitProposal(
   const industryId = Number(industry_id);
   const timelineWeeks = Number(estimated_timeline_weeks);
 
-  if (!problemId || !universityId || !industryId) {
-    throw new Error('Problem ID, university ID, and industry ID are required.');
+  if (!problemId || !universityId) {
+    throw new Error('Problem ID and university ID are required.');
   }
 
   if (!abstract_plan || String(abstract_plan).trim().length < 10) {
@@ -47,12 +47,12 @@ async function submitProposal(
       `SELECT id, user_role
        FROM users
        WHERE id IN ($1, $2);`,
-      [universityId, industryId]
+      [universityId, industryId || universityId]
     );
     const rolesById = new Map(usersResult.rows.map((user) => [Number(user.id), user.user_role]));
 
-    if (rolesById.get(universityId) !== 'university' || rolesById.get(industryId) !== 'industry') {
-      throw new Error('The consortium must contain one university lead and one industry lead.');
+    if (rolesById.get(universityId) !== 'university') {
+      throw new Error('The proposer must be a university.');
     }
 
     const proposalInsertResult = await databaseClient.query(
@@ -72,7 +72,7 @@ async function submitProposal(
       [
         problemId,
         universityId,
-        industryId,
+        industryId || null,
         String(abstract_plan).trim(),
         corporate_contribution_notes ? String(corporate_contribution_notes).trim() : '',
         timelineWeeks,
@@ -170,7 +170,7 @@ async function allotProjectToUniversity(problem_id, proposal_id) {
     );
 
     await databaseClient.query(
-      "UPDATE problems SET problem_status = 'in_progress' WHERE id = $1;",
+      "UPDATE problems SET problem_status = 'university_assigned' WHERE id = $1;",
       [problemId]
     );
 
@@ -185,15 +185,13 @@ async function allotProjectToUniversity(problem_id, proposal_id) {
     await databaseClient.query(
       `
         INSERT INTO notifications (user_id, message)
-        VALUES ($1, $2), ($3, $4), ($5, $6);
+        VALUES ($1, $2), ($3, $4);
       `,
       [
         problemRecord.user_id,
-        `Your issue #${problemId} has been approved and is now in progress under a consortium allotment.`,
+        `Your issue #${problemId} has been approved and a university has been assigned.`,
         proposalRecord.university_id,
         `Project allotment confirmed for problem #${problemId}. An advance of 40% has been reserved for your university lab.`,
-        proposalRecord.industry_id,
-        `Project allotment confirmed for problem #${problemId}. Your consortium contribution has been accepted and a 40% advance is now authorised.`,
       ]
     );
 

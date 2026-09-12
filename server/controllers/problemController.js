@@ -3,10 +3,13 @@ const { findSimilarProblems, generateProblemEmbedding, serializeVector } = requi
 const { analyzeProblemWithLLM } = require('../services/aiService');
 const { submitProposal, allotProjectToUniversity } = require('../services/universityService');
 const {
-  releaseMilestoneTranche,
-  submitFinalVerificationRequest,
-  processCitizenObjection,
+  uploadUniversitySolution,
+  verifyUniversitySolution,
+  submitIndustryBid,
+  allotIndustry,
+  uploadIndustryWork,
   confirmCitizenFix,
+  processCitizenObjection,
 } = require('../services/projectService');
 
 const severityMap = {
@@ -68,20 +71,12 @@ exports.createProblemReport = async (req, res) => {
   }
 
   const databaseClient = await pool.connect();
-  let embedding = null;
-
-  try {
-    embedding = serializeVector(await generateProblemEmbedding(title, description));
-  } catch (embeddingError) {
-    console.error('Problem embedding generation failed; report will be stored without an embedding:', embeddingError.message);
-  }
-
   try {
     await databaseClient.query('BEGIN');
 
     const problemInsertQuery = `
-      INSERT INTO problems (user_id, title, description, image_url, category, severity_score, embedding, problem_status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'reported')
+      INSERT INTO problems (user_id, title, description, image_url, category, severity_score, problem_status)
+      VALUES ($1, $2, $3, $4, $5, $6, 'reported')
       RETURNING *;
     `;
 
@@ -92,7 +87,6 @@ exports.createProblemReport = async (req, res) => {
       imageUrl,
       category.trim(),
       severityScore,
-      embedding,
     ]);
 
     const loggedProblemRecord = problemResult.rows[0];
@@ -434,12 +428,12 @@ exports.getActiveProjects = async (req, res) => {
     const query = req.user.user_role === 'government'
       ? `SELECT *
          FROM problems
-         WHERE problem_status IN ('in_progress', 'rework_in_progress')
+         WHERE problem_status IN ('in_progress', 'rework_in_progress', 'university_assigned', 'solution_uploaded', 'tender_raised', 'industry_assigned', 'industry_work_uploaded', 'solved')
          ORDER BY id DESC;`
       : `SELECT problems.*
          FROM problems
          JOIN proposals ON proposals.problem_id = problems.id
-         WHERE problems.problem_status IN ('in_progress', 'rework_in_progress')
+         WHERE problems.problem_status IN ('in_progress', 'rework_in_progress', 'university_assigned', 'solution_uploaded', 'tender_raised', 'industry_assigned', 'industry_work_uploaded', 'solved')
            AND proposals.proposal_status = 'allotted'
            AND (proposals.university_id = $1 OR proposals.industry_id = $1)
          ORDER BY problems.id DESC;`;
@@ -466,23 +460,53 @@ function sendProjectServiceError(res, error, fallbackMessage) {
   });
 }
 
-exports.approveMilestone = async (req, res) => {
+exports.uploadUniversitySolution = async (req, res) => {
   try {
-    const result = await releaseMilestoneTranche(req.body.problem_id, req.body.tranche_number);
+    const result = await uploadUniversitySolution(req.body.problem_id, req.user.id, req.body.notes);
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Milestone approval failed:', error);
-    return sendProjectServiceError(res, error, 'Milestone approval failed');
+    console.error('University solution upload failed:', error);
+    return sendProjectServiceError(res, error, 'Upload failed');
   }
 };
 
-exports.triggerFactoryHandover = async (req, res) => {
+exports.verifyUniversitySolution = async (req, res) => {
   try {
-    const result = await submitFinalVerificationRequest(req.body.problem_id, req.user.id);
+    const result = await verifyUniversitySolution(req.body.problem_id, req.body.action, req.body.feedback);
     return res.status(200).json(result);
   } catch (error) {
-    console.error('Factory handover failed:', error);
-    return sendProjectServiceError(res, error, 'Factory handover failed');
+    console.error('Verification failed:', error);
+    return sendProjectServiceError(res, error, 'Verification failed');
+  }
+};
+
+exports.submitIndustryBid = async (req, res) => {
+  try {
+    const result = await submitIndustryBid(req.body.problem_id, req.user.id, req.body.notes);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Industry bid failed:', error);
+    return sendProjectServiceError(res, error, 'Industry bid failed');
+  }
+};
+
+exports.allotIndustry = async (req, res) => {
+  try {
+    const result = await allotIndustry(req.body.problem_id, req.body.proposal_id);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Industry allotment failed:', error);
+    return sendProjectServiceError(res, error, 'Industry allotment failed');
+  }
+};
+
+exports.uploadIndustryWork = async (req, res) => {
+  try {
+    const result = await uploadIndustryWork(req.body.problem_id, req.user.id, req.body.notes, req.body.image_url);
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Industry work upload failed:', error);
+    return sendProjectServiceError(res, error, 'Upload failed');
   }
 };
 

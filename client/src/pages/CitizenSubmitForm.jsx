@@ -91,7 +91,7 @@ function CitizenSubmitForm() {
 
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8">
-      <div className="bg-navy-blue px-6 py-4 border-b-4 border-saffron">
+      <div className="bg-india-green px-6 py-4 border-b-4 border-saffron">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <svg className="w-6 h-6 text-saffron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -106,7 +106,7 @@ function CitizenSubmitForm() {
             <label className="block text-sm font-bold text-gray-700 mb-2">Summary Headline</label>
             <input
               type="text"
-              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy-blue focus:border-navy-blue outline-none transition-colors"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors"
               placeholder="Briefly state the core issue (Min 5 characters)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -117,7 +117,7 @@ function CitizenSubmitForm() {
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Detailed Environmental Parameters</label>
             <textarea
-              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy-blue focus:border-navy-blue outline-none transition-colors h-32 resize-y"
+              className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors h-32 resize-y"
               placeholder="Describe the physical conditions, severity, and exact location markers in depth (Min 20 characters)..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -133,7 +133,7 @@ function CitizenSubmitForm() {
                   <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <div className="flex text-sm text-gray-600 justify-center">
-                  <label htmlFor="evidence-upload-input" className="relative cursor-pointer bg-white rounded-md font-medium text-navy-blue hover:text-blue-800 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-navy-blue px-2 py-1">
+                  <label htmlFor="evidence-upload-input" className="relative cursor-pointer bg-white rounded-md font-medium text-india-green hover:text-green-800 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-india-green px-2 py-1">
                     <span>Upload a file</span>
                     <input
                       id="evidence-upload-input"
@@ -173,7 +173,7 @@ function CitizenSubmitForm() {
 
       <div className="bg-gray-50 border-t border-gray-200 p-6 md:p-8">
         <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-          <svg className="w-6 h-6 text-navy-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-india-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
           Active Trackers &amp; Audits
@@ -181,7 +181,7 @@ function CitizenSubmitForm() {
         
         {trackerLoading && (
           <div className="flex items-center gap-3 text-gray-600 p-4">
-            <svg className="animate-spin h-5 w-5 text-navy-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-5 w-5 text-india-green" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -208,7 +208,7 @@ function CitizenSubmitForm() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="bg-gray-50 p-3 rounded border border-gray-100">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
-                    <p className="font-semibold text-navy-blue text-sm capitalize">{problem.problem_status.replace(/_/g, ' ')}</p>
+                    <p className="font-semibold text-india-green text-sm capitalize">{problem.problem_status.replace(/_/g, ' ')}</p>
                   </div>
                   <div className="bg-gray-50 p-3 rounded border border-gray-100">
                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Milestone Stage</p>

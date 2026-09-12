@@ -40,23 +40,15 @@ function AuthPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center bg-white/90 backdrop-blur-md rounded-xl shadow-2xl overflow-hidden border border-white/20">
         
         {/* Left Info Panel */}
-        <div className="p-8 md:p-12 h-full flex flex-col justify-center bg-gradient-to-br from-navy-blue to-blue-900 text-white relative">
+        <div className="p-8 md:p-12 h-full flex flex-col justify-center bg-gradient-to-br from-saffron to-india-green text-white relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-saffron via-white to-india-green"></div>
-          <svg className="w-16 h-16 mb-6 text-white opacity-90" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2L2 22h20L12 2zm0 3.8L18.4 19H5.6L12 5.8z" />
-          </svg>
-          <h1 className="text-3xl font-bold mb-2">Societal Innovation Collaboration</h1>
-          <h2 className="text-sm font-semibold text-saffron uppercase tracking-widest mb-6">Government of India</h2>
+          <img src="/jharkhand_logo.png" alt="Jharkhand Logo" className="w-24 h-24 mb-6 object-contain shadow-lg rounded-full bg-white p-1" />
+          <h1 className="text-3xl font-bold mb-2 uppercase tracking-widest">Government of Jharkhand</h1>
           
           <div className="space-y-6 text-sm text-blue-100">
             <div className="bg-white/10 p-4 rounded-lg border border-white/10">
-              <h3 className="font-bold text-white text-base mb-1">SIH26043</h3>
-              <p>Societal Innovation Collaboration addresses the gap between real-world societal problems and the people capable of developing practical solutions.</p>
-            </div>
-            
-            <div className="bg-white/10 p-4 rounded-lg border border-white/10">
-              <h3 className="font-bold text-white text-base mb-1">SIH26021</h3>
-              <p>Honey Chain tackles issues faced by beekeepers and consumers, such as poor hive monitoring, lack of traceability, and difficulty ensuring honey quality and authenticity.</p>
+              <h3 className="font-bold text-white text-base mb-1">Empowering Jharkhand</h3>
+              <p>Connecting local societal problems with innovators capable of developing practical, sustainable solutions for the people of Jharkhand.</p>
             </div>
           </div>
         </div>
@@ -90,7 +82,7 @@ function AuthPage() {
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
                   required 
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy-blue focus:border-navy-blue outline-none transition-colors"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -104,7 +96,7 @@ function AuthPage() {
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy-blue focus:border-navy-blue outline-none transition-colors"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors"
                 placeholder="name@example.com"
               />
             </div>
@@ -118,7 +110,7 @@ function AuthPage() {
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 required 
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy-blue focus:border-navy-blue outline-none transition-colors"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -130,7 +122,7 @@ function AuthPage() {
                   id="auth-role" 
                   value={userRole} 
                   onChange={(e) => setUserRole(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-navy-blue focus:border-navy-blue outline-none transition-colors bg-white"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-india-green focus:border-india-green outline-none transition-colors bg-white"
                 >
                   <option value="citizen">Citizen</option>
                   <option value="government">Government</option>
@@ -156,7 +148,7 @@ function AuthPage() {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError('');
               }}
-              className="text-sm font-medium text-navy-blue hover:text-blue-800 hover:underline"
+              className="text-sm font-medium text-india-green hover:text-green-800 hover:underline"
             >
               {mode === 'login' ? "Don't have an account? Register now" : "Already registered? Sign in instead"}
             </button>

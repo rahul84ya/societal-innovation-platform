@@ -13,6 +13,11 @@ CREATE TYPE problem_status AS ENUM (
   'rejected_by_govt',
   'open_for_research',
   'pending_consortium_review',
+  'university_assigned',
+  'solution_uploaded',
+  'tender_raised',
+  'industry_assigned',
+  'industry_work_uploaded',
   'in_progress',
   'rework_in_progress',
   'pending_citizen_verification',
@@ -49,21 +54,24 @@ CREATE TABLE problems (
   citizen_feedback_notes TEXT,
   citizen_verified_at TIMESTAMPTZ,
   current_milestone_stage INTEGER NOT NULL DEFAULT 0 CHECK (current_milestone_stage BETWEEN 0 AND 2),
-  parent_problem_id INTEGER REFERENCES problems(id) ON DELETE SET NULL
+  parent_problem_id INTEGER REFERENCES problems(id) ON DELETE SET NULL,
+  university_solution_url TEXT,
+  industry_work_url TEXT,
+  problem_solved_images_url TEXT
 );
 
 CREATE TABLE proposals (
   id SERIAL PRIMARY KEY,
   problem_id INTEGER NOT NULL REFERENCES problems(id) ON DELETE CASCADE,
   university_id INTEGER NOT NULL REFERENCES users(id),
-  industry_id INTEGER NOT NULL REFERENCES users(id),
+  industry_id INTEGER REFERENCES users(id),
   abstract_plan TEXT NOT NULL,
   corporate_contribution_notes TEXT,
   estimated_timeline_weeks INTEGER NOT NULL CHECK (estimated_timeline_weeks > 0),
   proposal_status proposal_status NOT NULL DEFAULT 'pending',
   allotted_at TIMESTAMPTZ,
-  CONSTRAINT proposals_problem_university_industry_key
-    UNIQUE (problem_id, university_id, industry_id)
+  CONSTRAINT proposals_problem_university_key
+    UNIQUE (problem_id, university_id)
 );
 
 CREATE TABLE financial_ledger (

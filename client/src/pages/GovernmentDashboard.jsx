@@ -99,6 +99,30 @@ function GovernmentDashboard() {
     }
   };
 
+  const verifySolution = async (problemId) => {
+    try {
+      setLoading(true);
+      const response = await apiFetch('/api/problems/verify-university-solution', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problem_id: Number(problemId), action: 'approve' }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Verification failed.');
+      }
+
+      alert('Feasibility verified. Next 30% advance will be given and tender raised for industries.');
+      await fetchActiveProjects();
+    } catch (error) {
+      console.error('Verification failed:', error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBudgetChange = (problemId, value) => {
     setBudgetInputs((previous) => ({
       ...previous,
@@ -145,7 +169,7 @@ function GovernmentDashboard() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Dashboard Header */}
-      <div className="bg-navy-blue rounded-xl shadow-lg p-6 md:p-8 flex items-center gap-4 text-white relative overflow-hidden">
+      <div className="bg-saffron rounded-xl shadow-lg p-6 md:p-8 flex items-center gap-4 text-white relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-saffron via-white to-india-green"></div>
         <div className="p-3 bg-white/10 rounded-lg backdrop-blur-sm">
           <svg className="w-8 h-8 text-saffron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +251,7 @@ function GovernmentDashboard() {
                         <input
                           type="number"
                           min="0"
-                          className="focus:ring-navy-blue focus:border-navy-blue block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md py-2 border"
+                          className="focus:ring-india-green focus:border-india-green block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md py-2 border"
                           placeholder="0.00"
                           value={budgetInputs[problem.id] ?? ''}
                           onChange={(e) => handleBudgetChange(problem.id, e.target.value)}
@@ -307,7 +331,7 @@ function GovernmentDashboard() {
 
                     <button
                       type="button"
-                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-navy-blue hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy-blue transition-colors"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-india-green hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-india-green transition-colors"
                       disabled={loading}
                       onClick={() => allotProject(proposal.problem_id, proposal.proposal_id)}
                     >
@@ -364,18 +388,34 @@ function GovernmentDashboard() {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        className={`w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white transition-colors ${
-                          disabled 
-                            ? 'bg-gray-400 cursor-not-allowed' 
-                            : 'bg-saffron hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 text-gray-900'
-                        }`}
-                        disabled={disabled}
-                        onClick={() => approveMilestone(project.id)}
-                      >
-                        {milestoneComplete ? 'Milestone 1 Already Paid' : 'Verify & Payout Milestone 1 (30%)'}
-                      </button>
+                      {project.problem_status === 'solution_uploaded' ? (
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">
+                            <strong>Note:</strong> Lab prototype uploaded by university. Please verify feasibility.
+                          </div>
+                          <button
+                            type="button"
+                            className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white transition-colors bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            disabled={loading}
+                            onClick={() => verifySolution(project.id)}
+                          >
+                            Verify Feasibility & Raise Tender (30% Advance)
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className={`w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white transition-colors ${
+                            disabled 
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-saffron hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 text-gray-900'
+                          }`}
+                          disabled={disabled}
+                          onClick={() => approveMilestone(project.id)}
+                        >
+                          {milestoneComplete ? 'Milestone 1 Already Paid' : 'Verify & Payout Milestone 1 (30%)'}
+                        </button>
+                      )}
                     </article>
                   );
                 })}

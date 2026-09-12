@@ -7,6 +7,7 @@ function IndustryPortal() {
   const [activeProjects, setActiveProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState(null);
+  const [finalWorkInputs, setFinalWorkInputs] = useState({});
 
   const fetchOpenChallenges = async () => {
     try {
@@ -55,6 +56,35 @@ function IndustryPortal() {
     }
   };
 
+  const uploadFinalWork = async (problemId) => {
+    try {
+      setLoading(true);
+      const inputs = finalWorkInputs[problemId] || {};
+      const response = await apiFetch('/api/problems/upload-industry-work', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problem_id: Number(problemId),
+          notes: inputs.notes || '',
+          image_url: inputs.image_url || '',
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Work upload failed.');
+      }
+
+      alert('Final work uploaded successfully.');
+      await fetchActiveProjects();
+    } catch (error) {
+      console.error('Work upload failed:', error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOpenChallenges();
     fetchActiveProjects();
@@ -91,7 +121,7 @@ function IndustryPortal() {
                 {Number(project.current_milestone_stage) === 0 && (
                   <span className="inline-block bg-yellow-50 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium border border-yellow-200">Phase 1: Academic Lab Prototyping</span>
                 )}
-                {Number(project.current_milestone_stage) === 1 && (
+                {Number(project.current_milestone_stage) === 1 && project.problem_status !== 'industry_assigned' && (
                   <button
                     type="button"
                     className="w-full mt-4 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
@@ -100,6 +130,41 @@ function IndustryPortal() {
                   >
                     Log Factory Deployment &amp; Trigger Handover
                   </button>
+                )}
+                {project.problem_status === 'industry_assigned' && (
+                  <div className="mt-4 space-y-4">
+                    <div className="bg-green-50 text-green-800 text-sm p-3 rounded border border-green-200">
+                      <strong>30% Advance Released</strong>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Final Solution Work</label>
+                      <textarea
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
+                        rows="3"
+                        placeholder="Describe the final factory deployed solution..."
+                        value={finalWorkInputs[project.id]?.notes || ''}
+                        onChange={(e) => setFinalWorkInputs({...finalWorkInputs, [project.id]: {...finalWorkInputs[project.id], notes: e.target.value}})}
+                      ></textarea>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Problem Solved Images (URL)</label>
+                      <input
+                        type="text"
+                        className="w-full p-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="https://..."
+                        value={finalWorkInputs[project.id]?.image_url || ''}
+                        onChange={(e) => setFinalWorkInputs({...finalWorkInputs, [project.id]: {...finalWorkInputs[project.id], image_url: e.target.value}})}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                      disabled={loading}
+                      onClick={() => uploadFinalWork(project.id)}
+                    >
+                      Upload Final Work
+                    </button>
+                  </div>
                 )}
               </article>
             ))}

@@ -4,8 +4,10 @@ import { apiFetch } from '../auth';
 
 function UniversityDashboard() {
   const [openChallenges, setOpenChallenges] = useState([]);
+  const [activeProjects, setActiveProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState(null);
+  const [solutionNotes, setSolutionNotes] = useState({});
 
   const fetchOpenChallenges = async () => {
     try {
@@ -20,8 +22,50 @@ function UniversityDashboard() {
     }
   };
 
+  const fetchActiveProjects = async () => {
+    try {
+      const response = await apiFetch('/api/problems/active-projects');
+      const data = await response.json();
+      setActiveProjects(data.success ? data.data || [] : []);
+    } catch (error) {
+      console.error('Failed to fetch active projects:', error);
+    }
+  };
+
+  const uploadSolution = async (problemId) => {
+    const notes = solutionNotes[problemId] || '';
+    if (!notes.trim()) {
+      alert('Please enter solution notes before uploading.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await apiFetch('/api/problems/upload-university-solution', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problem_id: Number(problemId), notes }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Solution upload failed.');
+      }
+
+      alert(result.message);
+      setSolutionNotes(prev => ({ ...prev, [problemId]: '' }));
+      await fetchActiveProjects();
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchOpenChallenges();
+    fetchActiveProjects();
   }, []);
 
   return (
@@ -35,6 +79,56 @@ function UniversityDashboard() {
            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       )}
+
+      <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <h2 className="text-xl font-semibold text-gray-800">Assigned Projects</h2>
+        </div>
+        <div className="p-6">
+        {activeProjects.length === 0 ? (
+          <p className="text-gray-500 italic text-center py-8">No assigned projects are currently active.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {activeProjects.map((project) => (
+              <article key={project.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{project.title}</h3>
+                <div className="space-y-2 mb-4 flex-grow">
+                  <p className="text-sm"><strong className="text-gray-700">Status:</strong> <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{project.problem_status}</span></p>
+                  <p className="text-sm"><strong className="text-gray-700">Milestone stage:</strong> {project.current_milestone_stage}</p>
+                </div>
+                {project.problem_status === 'university_assigned' ? (
+                  <div className="mt-4 space-y-2">
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-md mb-2">
+                      <p className="text-sm text-green-800 font-medium text-center">
+                        🎉 Congratulations, you've been assigned this project! 40% advance released.
+                      </p>
+                    </div>
+                    <textarea
+                      placeholder="Lab Prototype Evidence URL or Notes"
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                      value={solutionNotes[project.id] || ''}
+                      onChange={(e) => setSolutionNotes(prev => ({ ...prev, [project.id]: e.target.value }))}
+                      rows={2}
+                    ></textarea>
+                    <button
+                      type="button"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                      onClick={() => uploadSolution(project.id)}
+                    >
+                      Upload Solution
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 p-2 bg-gray-50 rounded text-center text-sm text-gray-600">
+                    Awaiting Government Verification / Next Steps
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+        </div>
+      </section>
 
       <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">

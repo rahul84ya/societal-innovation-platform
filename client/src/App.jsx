@@ -48,13 +48,9 @@ function App() {
       <header className="bg-white shadow-md border-b-4 border-saffron relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Emblem Placeholder */}
-            <svg className="w-12 h-12 text-navy-blue" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2L2 22h20L12 2zm0 3.8L18.4 19H5.6L12 5.8z" />
-            </svg>
+            <img src="/jharkhand_logo.png" alt="Jharkhand Logo" className="w-16 h-16 object-contain rounded-full shadow-sm bg-white p-1" />
             <div>
-              <h1 className="text-xl font-bold text-navy-blue uppercase tracking-wider leading-tight">Societal Innovation Collaboration</h1>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Government of India</p>
+              <p className="text-xl font-bold text-india-green uppercase tracking-wider leading-tight">Government of Jharkhand</p>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -72,10 +68,10 @@ function App() {
         </div>
         
         {/* Navigation Tabs */}
-        <div className="bg-navy-blue">
+        <div className="bg-saffron">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex space-x-1" role="tablist">
-              <div className="px-6 py-3 bg-white text-navy-blue font-bold rounded-t-lg shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] relative top-[1px]">
+              <div className="px-6 py-3 bg-white text-saffron font-bold rounded-t-lg shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] relative top-[1px]">
                 {roleTitles[role]}
               </div>
             </div>
@@ -94,10 +90,10 @@ function App() {
       </main>
       
       {/* Footer */}
-      <footer className="bg-navy-blue text-white py-6 relative z-10 mt-auto border-t-4 border-india-green">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-300">
-          <p className="mb-2">SIH26043 – Societal Innovation Collaboration | SIH26021 – Honey Chain</p>
-          <p>&copy; 2026 Government of India. All rights reserved.</p>
+      <footer className="bg-india-green text-white py-6 relative z-10 mt-auto border-t-4 border-saffron">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-white">
+          <p className="mb-2 font-semibold">Empowering Jharkhand through Innovation</p>
+          <p>&copy; 2026 Government of Jharkhand. All rights reserved.</p>
         </div>
       </footer>
     </div>
