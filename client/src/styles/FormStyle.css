@@ -1,0 +1,111 @@
+.app-shell {
+  min-height: 100vh;
+  background: #f5f7fb;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.view-tabs {
+  max-width: 1100px;
+  margin: 0 auto 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  border: 1px solid #dfe7f1;
+  background: #ffffff;
+  color: #345;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button.active {
+  background: #0070f3;
+  color: #ffffff;
+  border-color: #0070f3;
+  box-shadow: 0 8px 20px rgba(0, 112, 243, 0.18);
+}
+
+.card-layout {
+  max-width: 550px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+.card-layout h2 {
+  margin-top: 0;
+  color: #222;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
+  font-size: 14px;
+}
+
+input[type="text"], textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+  outline: none;
+}
+
+input[type="text"]:focus, textarea:focus {
+  border-color: #0070f3;
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.15);
+}
+
+input[type="file"] {
+  display: block;
+  margin-top: 4px;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+button.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: #0070f3;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  transition: background 0.2s ease;
+}
+
+button.btn-primary:hover {
+  background: #0061d5;
+}
+
+button.btn-primary:disabled {
+  background: #bababa;
+  cursor: not-allowed;
+}
