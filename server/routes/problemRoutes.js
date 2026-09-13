@@ -92,7 +92,15 @@ router.post('/upload-image', requireAuth, handleImageUpload, async (req, res) =>
     return res.json({ success: true, url: data.publicUrl });
   } catch (error) {
     console.error('Supabase evidence upload failed:', error);
-    return res.status(502).json({ success: false, error: 'Evidence storage upload failed.' });
+    const extension = path.extname(req.file.originalname).toLowerCase() || '.bin';
+    const localFileName = `${crypto.randomUUID()}${extension}`;
+    const localFilePath = path.join(localUploadDirectory, localFileName);
+    fs.writeFileSync(localFilePath, req.file.buffer);
+    return res.json({
+      success: true,
+      url: `http://localhost:${process.env.PORT || 5001}/uploads/${localFileName}`,
+      storage: 'local-fallback',
+    });
   }
 });
 
