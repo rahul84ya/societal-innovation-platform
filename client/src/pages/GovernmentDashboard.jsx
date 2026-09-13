@@ -330,7 +330,7 @@ function GovernmentDashboard() {
                     <div className="mb-4 text-sm border-t border-gray-100 pt-3">
                       <span className="block text-xs font-bold text-gray-500 uppercase mb-1">Partners</span>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">Univ ID: {proposal.university_id}</span>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Ind ID: {proposal.industry_id}</span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Industry: Open tender after university phase</span>
                     </div>
 
                     <div className="mb-5 text-sm bg-gray-50 p-3 rounded">

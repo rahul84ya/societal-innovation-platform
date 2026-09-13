@@ -9,8 +9,13 @@ function parsePositiveInteger(value, fieldName) {
 }
 
 // 2. University Uploads Solution
-async function uploadUniversitySolution(problem_id, university_id, notes) {
+async function uploadUniversitySolution(problem_id, university_id, notes, pdf_url) {
   const problemId = parsePositiveInteger(problem_id, 'Problem ID');
+
+  if (!pdf_url || typeof pdf_url !== 'string' || !pdf_url.trim()) {
+    throw new Error('A PDF solution file is required. Please upload a PDF before submitting.');
+  }
+
   const databaseClient = await pool.connect();
 
   try {
@@ -38,8 +43,8 @@ async function uploadUniversitySolution(problem_id, university_id, notes) {
     }
 
     await databaseClient.query(
-      `UPDATE problems SET problem_status = 'solution_uploaded', current_milestone_stage = 1 WHERE id = $1;`,
-      [problemId]
+      `UPDATE problems SET problem_status = 'solution_uploaded', current_milestone_stage = 1, university_solution_url = $2 WHERE id = $1;`,
+      [problemId, pdf_url.trim()]
     );
     await databaseClient.query(
       `INSERT INTO notifications (user_id, message) VALUES ($1, $2);`,
@@ -122,8 +127,9 @@ async function verifyUniversitySolution(problem_id, action, feedback) {
 }
 
 // 4. Industry Submits Bid (handled in universityService/projectService - let's add it here for separation)
-async function submitIndustryBid(problem_id, industry_id, notes) {
+async function submitIndustryBid(problem_id, industry_id, notes, proposal_id) {
   const problemId = parsePositiveInteger(problem_id, 'Problem ID');
+  const proposalId = parsePositiveInteger(proposal_id, 'Proposal ID');
   const databaseClient = await pool.connect();
   
   try {
@@ -133,11 +139,21 @@ async function submitIndustryBid(problem_id, industry_id, notes) {
       throw new Error('Project must be in tender_raised state.');
     }
     const proposalResult = await databaseClient.query(
-      `SELECT * FROM proposals WHERE problem_id = $1 AND proposal_status = 'allotted' ORDER BY id DESC LIMIT 1;`, [problemId]
+      `SELECT * FROM proposals
+       WHERE id = $1 AND problem_id = $2 AND proposal_status = 'allotted'
+       FOR UPDATE;`,
+      [proposalId, problemId]
     );
     const proposalRecord = proposalResult.rows[0];
+
+    if (!proposalRecord) {
+      throw new Error('No allotted university proposal exists for this tender.');
+    }
+
+    if (proposalRecord.industry_id) {
+      throw new Error('This tender already has an industry bid.');
+    }
     
-    // update proposal with industry_id to signify bid
     await databaseClient.query(
       `UPDATE proposals SET industry_id = $1, corporate_contribution_notes = $2 WHERE id = $3;`,
       [industry_id, notes, proposalRecord.id]
@@ -199,6 +215,11 @@ async function allotIndustry(problem_id, proposal_id) {
 // 6. Industry Uploads Work
 async function uploadIndustryWork(problem_id, industry_id, notes, image_url) {
   const problemId = parsePositiveInteger(problem_id, 'Problem ID');
+
+  if (!image_url || typeof image_url !== 'string' || !image_url.trim()) {
+    throw new Error('A photo of the completed work is required. Please upload an image before submitting.');
+  }
+
   const databaseClient = await pool.connect();
   
   try {

@@ -179,6 +179,14 @@ exports.verifyAndAuditWithAI = async (req, res) => {
 
     const problemRecord = problemResult.rows[0];
 
+    if (problemRecord.problem_status !== 'reported') {
+      await databaseClient.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: `This problem has already been reviewed. Current status: "${problemRecord.problem_status}". Government audit can only act on problems in "reported" status.`,
+      });
+    }
+
     if (action_type === 'reject') {
       await databaseClient.query(
         "UPDATE problems SET problem_status = 'rejected_by_govt' WHERE id = $1;",
@@ -313,6 +321,29 @@ exports.getOpenChallenges = async (req, res) => {
   }
 };
 
+exports.getIndustryTenders = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT problems.*, proposals.id AS proposal_id, proposals.university_id,
+              proposals.abstract_plan, proposals.estimated_timeline_weeks
+       FROM problems
+       JOIN proposals ON proposals.problem_id = problems.id
+       WHERE problems.problem_status = 'tender_raised'
+         AND proposals.proposal_status = 'allotted'
+         AND proposals.industry_id IS NULL
+       ORDER BY problems.id DESC;`
+    );
+
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error('Failed to fetch industry tenders:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch industry tenders: ' + error.message,
+    });
+  }
+};
+
 exports.getSubmittedProposals = async (req, res) => {
   const { problem_id } = req.params;
 
@@ -375,15 +406,13 @@ exports.getConsortiumReviewQueue = async (req, res) => {
 exports.createConsortiumBid = async (req, res) => {
   const {
     problem_id,
-    university_id: requestedUniversityId,
-    industry_id: requestedIndustryId,
     abstract_plan,
     estimated_timeline_weeks,
     corporate_contribution_notes,
   } = req.body;
 
-  const universityId = req.user.user_role === 'university' ? req.user.id : requestedUniversityId;
-  const industryId = req.user.user_role === 'industry' ? req.user.id : requestedIndustryId;
+  const universityId = req.user.id;
+  const industryId = null;
 
   try {
     const result = await submitProposal(
@@ -485,7 +514,7 @@ function sendProjectServiceError(res, error, fallbackMessage) {
 
 exports.uploadUniversitySolution = async (req, res) => {
   try {
-    const result = await uploadUniversitySolution(req.body.problem_id, req.user.id, req.body.notes);
+    const result = await uploadUniversitySolution(req.body.problem_id, req.user.id, req.body.notes, req.body.pdf_url);
     return res.status(200).json(result);
   } catch (error) {
     console.error('University solution upload failed:', error);
@@ -505,7 +534,7 @@ exports.verifyUniversitySolution = async (req, res) => {
 
 exports.submitIndustryBid = async (req, res) => {
   try {
-    const result = await submitIndustryBid(req.body.problem_id, req.user.id, req.body.notes);
+    const result = await submitIndustryBid(req.body.problem_id, req.user.id, req.body.notes, req.body.proposal_id);
     return res.status(200).json(result);
   } catch (error) {
     console.error('Industry bid failed:', error);

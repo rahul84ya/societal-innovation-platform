@@ -1,24 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import JointProposalForm from '../components/JointProposalForm';
 import { apiFetch } from '../auth';
 import ProblemLocation from '../components/ProblemLocation';
 import { notify } from '../components/ToastProvider';
 
 function IndustryPortal() {
-  const [openChallenges, setOpenChallenges] = useState([]);
+  const [industryTenders, setIndustryTenders] = useState([]);
   const [activeProjects, setActiveProjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedProblem, setSelectedProblem] = useState(null);
+  const [tenderInputs, setTenderInputs] = useState({});
   const [finalWorkInputs, setFinalWorkInputs] = useState({});
 
-  const fetchOpenChallenges = async () => {
+  const fetchIndustryTenders = async () => {
     try {
       setLoading(true);
-      const response = await apiFetch('/api/problems/open-challenges');
+      const response = await apiFetch('/api/problems/industry-tenders');
       const data = await response.json();
-      setOpenChallenges(data.success ? data.data || [] : []);
+      setIndustryTenders(data.success ? data.data || [] : []);
     } catch (error) {
       console.error('Failed to fetch open challenges:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitTender = async (problemId, proposalId) => {
+    try {
+      setLoading(true);
+      const notes = tenderInputs[problemId]?.notes?.trim() || '';
+      if (notes.length < 10) {
+        notify('Please add at least 10 characters describing your tender response.', 'error');
+        return;
+      }
+
+      const response = await apiFetch('/api/problems/submit-industry-bid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problem_id: Number(problemId), notes, proposal_id: Number(proposalId) }),
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Tender submission failed.');
+      }
+
+      notify('Tender response submitted for Government review.', 'success');
+      await fetchIndustryTenders();
+    } catch (error) {
+      console.error('Tender submission failed:', error);
+      notify(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -38,13 +67,35 @@ function IndustryPortal() {
     try {
       setLoading(true);
       const inputs = finalWorkInputs[problemId] || {};
+      const imageFile = inputs.imageFile;
+
+      if (!imageFile) {
+        notify('Please select a photo of the completed work before uploading.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Step 1: Upload the image to Supabase
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      const imgRes = await apiFetch('/api/problems/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const imgData = await imgRes.json();
+
+      if (!imgRes.ok || !imgData.success) {
+        throw new Error(imgData.error || 'Photo upload failed.');
+      }
+
+      // Step 2: Submit final work with the uploaded image URL
       const response = await apiFetch('/api/problems/upload-industry-work', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           problem_id: Number(problemId),
           notes: inputs.notes || '',
-          image_url: inputs.image_url || '',
+          image_url: imgData.url,
         }),
       });
       const result = await response.json();
@@ -54,6 +105,7 @@ function IndustryPortal() {
       }
 
       notify('Final work uploaded successfully.', 'success');
+      setFinalWorkInputs(prev => ({ ...prev, [problemId]: {} }));
       await fetchActiveProjects();
     } catch (error) {
       console.error('Work upload failed:', error);
@@ -64,7 +116,7 @@ function IndustryPortal() {
   };
 
   useEffect(() => {
-    fetchOpenChallenges();
+    fetchIndustryTenders();
     fetchActiveProjects();
   }, []);
 
@@ -115,19 +167,26 @@ function IndustryPortal() {
                       ></textarea>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Problem Solved Images (URL)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Problem Solved Photo <span className="text-red-500">*</span>
+                      </label>
                       <input
-                        type="text"
-                        className="w-full p-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="https://..."
-                        value={finalWorkInputs[project.id]?.image_url || ''}
-                        onChange={(e) => setFinalWorkInputs({...finalWorkInputs, [project.id]: {...finalWorkInputs[project.id], image_url: e.target.value}})}
+                        type="file"
+                        accept="image/*"
+                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 border border-gray-300 rounded-md p-1.5 cursor-pointer"
+                        onChange={(e) => setFinalWorkInputs({...finalWorkInputs, [project.id]: {...finalWorkInputs[project.id], imageFile: e.target.files[0] || null}})}
                       />
+                      {finalWorkInputs[project.id]?.imageFile && (
+                        <p className="mt-1 text-xs text-green-700 flex items-center gap-1">
+                          🖼️ {finalWorkInputs[project.id].imageFile.name}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-400">Image files only. Max 10 MB.</p>
                     </div>
                     <button
                       type="button"
                       className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                      disabled={loading}
+                      disabled={loading || !finalWorkInputs[project.id]?.imageFile}
                       onClick={() => uploadFinalWork(project.id)}
                     >
                       Upload Final Work
@@ -143,14 +202,14 @@ function IndustryPortal() {
 
       <section className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-xl font-semibold text-gray-800">Open Enterprise Opportunities</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Open Government Tenders</h2>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {openChallenges.length === 0 ? (
-              <p className="text-gray-500 italic col-span-full text-center py-8">No open enterprise opportunities available right now.</p>
+            {industryTenders.length === 0 ? (
+              <p className="text-gray-500 italic col-span-full text-center py-8">No Government tenders are available right now.</p>
             ) : (
-              openChallenges.map((problem) => (
+              industryTenders.map((problem) => (
                 <div key={problem.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col">
                   {problem.image_url && (
                     <img src={problem.image_url} alt={problem.title} className="w-full h-48 object-cover" />
@@ -163,12 +222,23 @@ function IndustryPortal() {
                       <p className="text-sm"><strong className="text-gray-700">Budget:</strong> ₹{Number(problem.allocated_budget || 0).toLocaleString()}</p>
                       <p className="text-sm"><strong className="text-gray-700">Severity:</strong> <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">{problem.severity_score}</span></p>
                     </div>
+                    <textarea
+                      rows="3"
+                      className="w-full mb-3 p-2 border border-gray-300 rounded focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Describe your industry tender response..."
+                      value={tenderInputs[problem.id]?.notes || ''}
+                      onChange={(event) => setTenderInputs((current) => ({
+                        ...current,
+                        [problem.id]: { ...current[problem.id], notes: event.target.value },
+                      }))}
+                    />
                     <button
                       type="button"
-                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 mt-auto"
-                      onClick={() => setSelectedProblem(problem.id)}
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors duration-200 mt-auto"
+                      disabled={loading}
+                      onClick={() => submitTender(problem.id, problem.proposal_id)}
                     >
-                      Partner & Apply as Consortium
+                      Submit Tender Response
                     </button>
                   </div>
                 </div>
@@ -178,18 +248,6 @@ function IndustryPortal() {
         </div>
       </section>
 
-      {selectedProblem && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <JointProposalForm
-            problemId={selectedProblem}
-            onSubmitSuccess={() => {
-              setSelectedProblem(null);
-              fetchOpenChallenges();
-            }}
-            onCancel={() => setSelectedProblem(null)}
-          />
-        </div>
-      )}
     </div>
   );
 }

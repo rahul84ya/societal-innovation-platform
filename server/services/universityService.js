@@ -10,7 +10,7 @@ async function submitProposal(
 ) {
   const problemId = Number(problem_id);
   const universityId = Number(university_id);
-  const industryId = Number(industry_id);
+  const industryId = industry_id ? Number(industry_id) : null;
   const timelineWeeks = Number(estimated_timeline_weeks);
 
   if (!problemId || !universityId) {
@@ -46,8 +46,8 @@ async function submitProposal(
     const usersResult = await databaseClient.query(
       `SELECT id, user_role
        FROM users
-       WHERE id IN ($1, $2);`,
-      [universityId, industryId || universityId]
+       WHERE id = $1;`,
+      [universityId]
     );
     const rolesById = new Map(usersResult.rows.map((user) => [Number(user.id), user.user_role]));
 

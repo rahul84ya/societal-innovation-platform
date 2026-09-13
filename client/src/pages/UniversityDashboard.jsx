@@ -34,19 +34,40 @@ function UniversityDashboard() {
     }
   };
 
+  const [solutionFiles, setSolutionFiles] = useState({});
+
   const uploadSolution = async (problemId) => {
     const notes = solutionNotes[problemId] || '';
-    if (!notes.trim()) {
-      notify('Please enter solution notes before uploading.', 'error');
+    const pdfFile = solutionFiles[problemId];
+
+    if (!pdfFile) {
+      notify('Please select a solution file before uploading.', 'error');
       return;
     }
 
     try {
       setLoading(true);
+
+      // Step 1: Upload the PDF
+      const formData = new FormData();
+      formData.append('solution_pdf', pdfFile);
+      const uploadRes = await apiFetch('/api/problems/upload-university-solution-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok || !uploadData.success) {
+        throw new Error(uploadData.error || 'PDF upload failed.');
+      }
+
+      const pdfUrl = uploadData.url;
+
+      // Step 2: Submit the solution with the PDF URL
       const response = await apiFetch('/api/problems/upload-university-solution', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem_id: Number(problemId), notes }),
+        body: JSON.stringify({ problem_id: Number(problemId), notes, pdf_url: pdfUrl }),
       });
       const result = await response.json();
 
@@ -56,6 +77,7 @@ function UniversityDashboard() {
 
       notify(result.message, 'success');
       setSolutionNotes(prev => ({ ...prev, [problemId]: '' }));
+      setSolutionFiles(prev => ({ ...prev, [problemId]: null }));
       await fetchActiveProjects();
     } catch (error) {
       console.error('Upload failed:', error);
@@ -99,14 +121,31 @@ function UniversityDashboard() {
                   <p className="text-sm"><strong className="text-gray-700">Milestone stage:</strong> {project.current_milestone_stage}</p>
                 </div>
                 {project.problem_status === 'university_assigned' ? (
-                  <div className="mt-4 space-y-2">
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-md mb-2">
+                  <div className="mt-4 space-y-3">
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-md">
                       <p className="text-sm text-green-800 font-medium text-center">
                         🎉 Congratulations, you've been assigned this project! 40% advance released.
                       </p>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Solution file <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/jpeg,image/png,image/webp"
+                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-300 rounded-md p-1.5 cursor-pointer"
+                        onChange={(e) => setSolutionFiles(prev => ({ ...prev, [project.id]: e.target.files[0] || null }))}
+                      />
+                      {solutionFiles[project.id] && (
+                        <p className="mt-1 text-xs text-green-700 flex items-center gap-1">
+                          📄 {solutionFiles[project.id].name}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-400">PDF, document, presentation, text, or image. Max 20 MB.</p>
+                    </div>
                     <textarea
-                      placeholder="Lab Prototype Evidence URL or Notes"
+                      placeholder="Additional notes (optional)"
                       className="w-full border border-gray-300 rounded-md p-2 text-sm"
                       value={solutionNotes[project.id] || ''}
                       onChange={(e) => setSolutionNotes(prev => ({ ...prev, [project.id]: e.target.value }))}
@@ -114,8 +153,9 @@ function UniversityDashboard() {
                     ></textarea>
                     <button
                       type="button"
-                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={() => uploadSolution(project.id)}
+                      disabled={!solutionFiles[project.id] || loading}
                     >
                       Upload Solution
                     </button>
@@ -159,7 +199,7 @@ function UniversityDashboard() {
                       className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 mt-auto"
                       onClick={() => setSelectedProblem(problem.id)}
                     >
-                      Partner & Apply as Consortium
+                      Submit Research Proposal
                     </button>
                   </div>
                 </div>
